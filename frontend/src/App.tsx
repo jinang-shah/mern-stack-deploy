@@ -7,12 +7,14 @@ interface User {
   age: number;
 }
 
+const API_URL = import.meta.env.VITE_API_URL; // Get API URL from .env file
+
 const App = () => {
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/users") // Backend URL
+      .get(`${API_URL}/api/users`) // Backend URL
       .then((response: any) => setUsers(response.data))
       .catch((error: any) => console.error("Error fetching users:", error));
   }, []);
