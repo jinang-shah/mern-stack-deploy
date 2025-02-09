@@ -1,5 +1,7 @@
 FROM node:18.20.0
 
+RUN npm install pm2 -g
+
 WORKDIR /app
 
 COPY package*.json ./
