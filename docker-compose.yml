@@ -4,7 +4,11 @@ services:
     container_name: mongo
     image: mongo:latest
     ports:
-      - "27017:27017"
+      - "27018:27017"
+    networks:
+      - mern
+    # volumes:
+    #   - mongo-data:/data/db
 
   backend:
     container_name: backend
@@ -13,6 +17,8 @@ services:
       - ./backend/.env.sample
     ports:
       - "5000:5000"
+    networks:
+      - mern
     depends_on:
       - mongodb
 
@@ -23,3 +29,15 @@ services:
       - ./frontend/.env.sample
     ports:
       - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - mern
+
+networks:
+  mern:
+    driver: bridge
+
+# volumes:
+#   mongo-data:
+#     driver: local

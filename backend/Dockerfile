@@ -16,4 +16,4 @@ RUN npm run build
 
 EXPOSE 5000
 
-CMD ["npm", "run", "prod"]
+CMD ["pm2-runtime", "dist/server.js"]
