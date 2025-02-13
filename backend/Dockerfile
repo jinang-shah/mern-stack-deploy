@@ -1,4 +1,4 @@
-FROM node:18.20.0
+FROM node:18.20.0 AS backend-builder
 
 RUN npm install pm2 -g
 
@@ -9,6 +9,15 @@ COPY package*.json ./
 RUN npm i
 
 COPY . .
+
+FROM node:18.20.0-slim
+
+WORKDIR /app
+
+# Install PM2 again in the final image
+RUN npm install pm2 -g
+
+COPY --from=backend-builder /app .
 
 COPY .env.sample .env
 
