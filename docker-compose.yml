@@ -1,0 +1,43 @@
+version: "3.8"
+services:
+  mongodb:
+    container_name: mongo
+    image: mongo:latest
+    ports:
+      - "27018:27017"
+    networks:
+      - mern
+    # volumes:
+    #   - mongo-data:/data/db
+
+  backend:
+    container_name: backend
+    build: ./backend
+    env_file:
+      - ./backend/.env.sample
+    ports:
+      - "5000:5000"
+    networks:
+      - mern
+    depends_on:
+      - mongodb
+
+  frontend:
+    container_name: frontend
+    build: ./frontend
+    env_file:
+      - ./frontend/.env.sample
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - mern
+
+networks:
+  mern:
+    driver: bridge
+
+# volumes:
+#   mongo-data:
+#     driver: local
