@@ -96,11 +96,11 @@ pipeline{
                     // Delete previous frontend images safely
                     def previousBuildNumber = (env.BUILD_NUMBER.toInteger() - 1).toString()
 
-                    def imageExists = sh(
+                    def frontendImageExists = sh(
                         script: "docker images | awk '\$1 == \"${FRONTEND_IMAGE}\" && \$2 == \"${previousBuildNumber}\"'",
                         returnStatus: true
                     )
-                    if (imageExists == 0) {
+                    if (frontendImageExists == 0) {
                         sh "docker rmi -f ${FRONTEND_IMAGE}:${previousBuildNumber}"
                         sh "docker rmi -f ${env.dockerHubUser}/${FRONTEND_IMAGE}:${previousBuildNumber}"
                         echo "Deleted old image"
@@ -109,13 +109,12 @@ pipeline{
                     }
 
                     // Delete previous backend image safely
-                    def previousBuildNumber = (env.BUILD_NUMBER.toInteger() - 1).toString()
 
-                    def imageExists = sh(
+                    def backendImageExists = sh(
                         script: "docker images | awk '\$1 == \"${BACKEND_IMAGE}\" && \$2 == \"${previousBuildNumber}\"'",
                         returnStatus: true
                     )
-                    if (imageExists == 0) {
+                    if (backendImageExists == 0) {
                         sh "docker rmi -f ${BACKEND_IMAGE}:${previousBuildNumber}"
                         sh "docker rmi -f ${env.dockerHubUser}/${BACKEND_IMAGE}:${previousBuildNumber}"
                         echo "Deleted old image"
