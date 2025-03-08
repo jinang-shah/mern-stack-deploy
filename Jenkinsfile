@@ -52,7 +52,14 @@ pipeline{
                 ]){
                     sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}"
                     sh "docker image tag mern-stack-deploy-frontend:latest ${env.dockerHubUser}/mern-stack-deploy-frontend:latest"
+                    sh "docker image tag mern-stack-deploy-frontend:${BUILD_NUMBER} ${env.dockerHubUser}/mern-stack-deploy-frontend:${BUILD_NUMBER}"
+                    sh "docker image tag mern-stack-deploy-backend:latest ${env.dockerHubUser}/mern-stack-deploy-backend:latest"
+                    sh "docker image tag mern-stack-deploy-backend:${BUILD_NUMBER} ${env.dockerHubUser}/mern-stack-deploy-backend:${BUILD_NUMBER}"
+
                     sh "docker push ${env.dockerHubUser}/mern-stack-deploy-frontend:latest"
+                    sh "docker push ${env.dockerHubUser}/mern-stack-deploy-frontend:${BUILD_NUMBER}"
+                    sh "docker push ${env.dockerHubUser}/mern-stack-deploy-backend:latest"
+                    sh "docker push ${env.dockerHubUser}/mern-stack-deploy-backend:${BUILD_NUMBER}"
                 }
             }
         }
