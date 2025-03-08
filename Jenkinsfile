@@ -42,7 +42,7 @@ pipeline{
                         returnStatus: true
                     )
                     if (imageExists == 0) {
-                        docker rmi -f ${FRONTEND_IMAGE}:${previousBuildNumber}
+                        sh "docker rmi -f ${FRONTEND_IMAGE}:${previousBuildNumber}"
                         echo "Deleted old image"
                     } else {
                         echo "Previous image ${FRONTEND_IMAGE}:${previousBuildNumber} not found, skipping deletion."
