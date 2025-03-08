@@ -5,7 +5,7 @@ export const createUser = async (req: Request, res: Response) => {
   try {
     const { name, email } = req.body;
     const user = new User({ name, email });
-    console.log("user details ==> ", user)
+    console.log("user details ========> ", user)
     await user.save();
     res.status(201).json(user);
   } catch (error: any) {
