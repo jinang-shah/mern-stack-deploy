@@ -31,8 +31,8 @@ pipeline{
         stage("Build Frontend Image") {
             steps {
                 script {
-                    sh "docker build -t mern-stack-deploy-frontend:latest -f frontend/Dockerfile frontend"
-                    sh "docker tag mern-stack-deploy-frontend:latest mern-stack-deploy-frontend:${BUILD_NUMBER}"
+                    sh "docker build -t ${FRONTEND_IMAGE}:latest -f frontend/Dockerfile frontend"
+                    sh "docker tag ${FRONTEND_IMAGE}:latest ${FRONTEND_IMAGE}:${BUILD_NUMBER}"
 
                     // Delete previous image safely
                     def previousBuildNumber = (env.BUILD_NUMBER.toInteger() - 1).toString()
@@ -43,6 +43,7 @@ pipeline{
                     )
                     if (imageExists == 0) {
                         sh "docker rmi -f ${FRONTEND_IMAGE}:${previousBuildNumber}"
+                        sh "docker rmi -f ${env.dockerHubUser}/${FRONTEND_IMAGE}:${previousBuildNumber}"
                         echo "Deleted old image"
                     } else {
                         echo "Previous image ${FRONTEND_IMAGE}:${previousBuildNumber} not found, skipping deletion."
@@ -50,42 +51,47 @@ pipeline{
                 }
             }
         }
-        // stage("Build Backend Image") {
-        //     steps {
-        //         script {
-        //             sh "docker build -t ${BACKEND_IMAGE}:latest -f backend/Dockerfile backend"
-        //             sh "docker tag ${BACKEND_IMAGE}:latest ${BACKEND_IMAGE}:${BUILD_NUMBER}"
+        stage("Build Backend Image") {
+            steps {
+                script {
+                    sh "docker build -t ${BACKEND_IMAGE}:latest -f backend/Dockerfile backend"
+                    sh "docker tag ${BACKEND_IMAGE}:latest ${BACKEND_IMAGE}:${BUILD_NUMBER}"
 
-        //             // Delete previous image safely
-        //             def previousBuildNumber = (env.BUILD_NUMBER.toInteger() - 1).toString()
-        //             sh """
-        //             if docker images | grep -q '${BACKEND_IMAGE}:${previousBuildNumber}'; then
-        //                 docker rmi -f ${BACKEND_IMAGE}:${previousBuildNumber}
-        //             else
-        //                 echo "Previous image ${BACKEND_IMAGE}:${previousBuildNumber} not found, skipping deletion."
-        //             fi
-        //             """
-        //         }
-        //     }
-        // }
+                    // Delete previous image safely
+                    def previousBuildNumber = (env.BUILD_NUMBER.toInteger() - 1).toString()
+
+                    def imageExists = sh(
+                        script: "docker images | awk '\$1 == \"${BACKEND_IMAGE}\" && \$2 == \"${previousBuildNumber}\"'",
+                        returnStatus: true
+                    )
+                    if (imageExists == 0) {
+                        sh "docker rmi -f ${BACKEND_IMAGE}:${previousBuildNumber}"
+                        sh "docker rmi -f ${env.dockerHubUser}/${BACKEND_IMAGE}:${previousBuildNumber}"
+                        echo "Deleted old image"
+                    } else {
+                        echo "Previous image ${BACKEND_IMAGE}:${previousBuildNumber} not found, skipping deletion."
+                    }
+                }
+            }
+        }
         stage("Push Image to DockerHub"){
             steps{
-                echo "Pushing docker image to Docker Hub"
+                echo "Pushing image to Docker Hub"
                 withCredentials([ usernamePassword(
                     'credentialsId': "dockerHubCred", 
                     passwordVariable: "dockerHubPass", 
                     usernameVariable: "dockerHubUser") 
                 ]){
                     sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}"
-                    sh "docker image tag mern-stack-deploy-frontend:latest ${env.dockerHubUser}/mern-stack-deploy-frontend:latest"
-                    sh "docker image tag mern-stack-deploy-frontend:${BUILD_NUMBER} ${env.dockerHubUser}/mern-stack-deploy-frontend:${BUILD_NUMBER}"
-                    // sh "docker image tag mern-stack-deploy-backend:latest ${env.dockerHubUser}/mern-stack-deploy-backend:latest"
-                    // sh "docker image tag mern-stack-deploy-backend:${BUILD_NUMBER} ${env.dockerHubUser}/mern-stack-deploy-backend:${BUILD_NUMBER}"
+                    sh "docker image tag ${FRONTEND_IMAGE}:latest ${env.dockerHubUser}/${FRONTEND_IMAGE}:latest"
+                    sh "docker image tag ${FRONTEND_IMAGE}:${BUILD_NUMBER} ${env.dockerHubUser}/${FRONTEND_IMAGE}:${BUILD_NUMBER}"
+                    sh "docker image tag ${BACKEND_IMAGE}:latest ${env.dockerHubUser}/${BACKEND_IMAGE}:latest"
+                    sh "docker image tag ${BACKEND_IMAGE}:${BUILD_NUMBER} ${env.dockerHubUser}/${BACKEND_IMAGE}:${BUILD_NUMBER}"
 
-                    sh "docker push ${env.dockerHubUser}/mern-stack-deploy-frontend:latest"
-                    sh "docker push ${env.dockerHubUser}/mern-stack-deploy-frontend:${BUILD_NUMBER}"
-                    // sh "docker push ${env.dockerHubUser}/mern-stack-deploy-backend:latest"
-                    // sh "docker push ${env.dockerHubUser}/mern-stack-deploy-backend:${BUILD_NUMBER}"
+                    sh "docker push ${env.dockerHubUser}/${FRONTEND_IMAGE}:latest"
+                    sh "docker push ${env.dockerHubUser}/${FRONTEND_IMAGE}:${BUILD_NUMBER}"
+                    sh "docker push ${env.dockerHubUser}/${BACKEND_IMAGE}:latest"
+                    sh "docker push ${env.dockerHubUser}/${BACKEND_IMAGE}:${BUILD_NUMBER}"
                 }
             }
         }
