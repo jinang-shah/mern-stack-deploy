@@ -3,6 +3,8 @@ pipeline{
     agent any
     environment{
         SONAR_HOME = tool "Sonar"
+        FRONTEND_IMAGE = "mern-stack-deploy-frontend"
+        BACKEND_IMAGE = "mern-stack-deploy-backend"
     }
     
     stages{
@@ -26,23 +28,43 @@ pipeline{
                 echo "Test cases passed"
             }
         }
-        stage("Build and Push Frontend Image") {
+        stage("Build Frontend Image") {
             steps {
                 script {
                     sh "docker build -t mern-stack-deploy-frontend:latest -f frontend/Dockerfile frontend"
                     sh "docker tag mern-stack-deploy-frontend:latest mern-stack-deploy-frontend:${BUILD_NUMBER}"
+                    
+                    // Delete previous image safely
+                    def previousBuildNumber = (env.BUILD_NUMBER.toInteger() - 1).toString()
+                    sh """
+                    if docker images | grep -q '${FRONTEND_IMAGE}:${previousBuildNumber}'; then
+                        docker rmi -f ${FRONTEND_IMAGE}:${previousBuildNumber}
+                    else
+                        echo "Previous image ${FRONTEND_IMAGE}:${previousBuildNumber} not found, skipping deletion."
+                    fi
+                    """
                 }
             }
         }
-        stage("Build and Push Backend Image") {
+        stage("Build Backend Image") {
             steps {
                 script {
-                    sh "docker build -t mern-stack-deploy-backend:latest -f backend/Dockerfile backend"
-                    sh "docker tag mern-stack-deploy-backend:latest mern-stack-deploy-backend:${BUILD_NUMBER}"
+                    sh "docker build -t ${BACKEND_IMAGE}:latest -f backend/Dockerfile backend"
+                    sh "docker tag ${BACKEND_IMAGE}:latest ${BACKEND_IMAGE}:${BUILD_NUMBER}"
+
+                    // Delete previous image safely
+                    def previousBuildNumber = (env.BUILD_NUMBER.toInteger() - 1).toString()
+                    sh """
+                    if docker images | grep -q '${BACKEND_IMAGE}:${previousBuildNumber}'; then
+                        docker rmi -f ${BACKEND_IMAGE}:${previousBuildNumber}
+                    else
+                        echo "Previous image ${BACKEND_IMAGE}:${previousBuildNumber} not found, skipping deletion."
+                    fi
+                    """
                 }
             }
         }
-        stage("Push to DockerHub"){
+        stage("Push Image to DockerHub"){
             steps{
                 echo "Pushing docker image to Docker Hub"
                 withCredentials([ usernamePassword(
